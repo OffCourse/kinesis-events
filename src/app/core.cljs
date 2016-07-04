@@ -14,16 +14,16 @@
       (js->clj :keywordize-keys true)))
 
 (defn ^:export handler [event context cb]
-  (let [event (js->clj event :keywordize-keys true)]
-    (println (map #(-> %
+  (let [event (js->clj event :keywordize-keys true)
+        urls (map #(-> %
                        first
                        second
                        :data
                        convert-payload
                        :url)
-                  (:Records event)))
+                  (:Records event))]
     (go
-      (cb nil (clj->js event)))))
+      (cb nil (clj->js urls)))))
 
 (defn -main [] identity)
 (set! *main-cli-fn* -main)
