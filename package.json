@@ -1,0 +1,24 @@
+{
+    "name": "kinesis-events",
+  "version": "0.0.1",
+    "description": "react to kinesis events",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/offcourse/kinesis-events.git"
+  },
+  "author": "yeehaa123",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/offcourse/kinesis-events/issues"
+  },
+  "homepage": "https://github.com/kinesis-events/cljs-lambda",
+  "dependencies": {
+    "node-lambda": "^0.8.6"
+  },
+  "scripts": {
+      "start": "./node_modules/node-lambda/bin/node-lambda run",
+      "deploy": "./node_modules/node-lambda/bin/node-lambda deploy -e development -f development.env",
+      "deploy-prod": "./node_modules/node-lambda/bin/node-lambda deploy -e production -f production.env"
+  }
+}
