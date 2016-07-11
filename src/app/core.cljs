@@ -5,8 +5,7 @@
 
 (def AWS (node/require "aws-sdk"))
 (def expander (node/require "unshortener"))
-#_(def expander (node/require "expand-url"))
-(def exp (node/require "node-url-expand"))
+(def Kinesis (new AWS.Kinesis))
 
 (node/enable-util-print!)
 
@@ -23,11 +22,11 @@
       :data))
 
 (defn expand-url [res]
-  (let [{:keys [hostname pathname] :as url} (js->clj (->> res
+  (let [{:keys [protocol hostname pathname] :as url} (js->clj (->> res
                                                    (.stringify js/JSON)
                                                    (.parse js/JSON))
                                              :keywordize-keys true)]
-    (str hostname pathname)))
+    (str protocol "//" hostname pathname)))
 
 (defn extract-url [{:keys [url] :as record}]
   (let [c (chan)]
@@ -36,16 +35,28 @@
                                  (>! c (expand-url %2)))))
     c))
 
+(defn create-message [link]
+  {:Data (.stringify js/JSON (clj->js link))
+   :StreamName "expanded-links"
+   :PartitionKey "url"})
+
+(defn send-message [msg]
+  (.putRecord Kinesis (clj->js msg) #(if %1
+                                       (println %1)
+                                       (println %2))))
+
 (defn ^:export handler [event context cb]
   (go
     (let [event (js->clj event :keywordize-keys true)
           payload (-> event
                       (extract-payload)
                       (convert-payload))
-          url     (<! (extract-url payload))
-          url-string (.stringify js/JSON (clj->js {:url url}))]
-      (println url-string)
-      (cb nil url-string))))
+          url         (<! (extract-url payload))
+          record      (assoc payload :url url)
+          message     (create-message record)]
+      (println (.stringify js/JSON (clj->js record)))
+      (send-message message)
+      (cb nil (clj->js message)))))
 
 (defn -main [] identity)
 (set! *main-cli-fn* -main)
